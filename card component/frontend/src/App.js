@@ -3,41 +3,221 @@ import axios from "axios";
 import ProductCard from "./components/ProductCard";
 import "./App.css";
 
+const API_URL = "https://card-component-backend.onrender.com/api/products";
+
 function App() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Backend se data fetch karna
+  const [showForm, setShowForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+
+  const [formData, setFormData] = useState({
+    name: "",
+    price: "",
+    description: "",
+  });
+
+  // GET - Fetch Products
+
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get(API_URL);
+      setProducts(response.data);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    axios
-      .get("https://card-component-backend.onrender.com/api/products")
-      .then((response) => {
-        setProducts(response.data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-        setLoading(false);
-      });
+    fetchProducts();
   }, []);
+
+  // Form Input Change
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    setFormData((previousData) => ({
+      ...previousData,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!formData.name || !formData.price) {
+      alert("Please enter product name and price.");
+      return;
+    }
+
+    try {
+      if (editingProduct) {
+        // UPDATE
+        const response = await axios.put(`${API_URL}/${editingProduct._id}`, {
+          name: formData.name,
+          price: Number(formData.price),
+          description: formData.description,
+        });
+
+        setProducts((previousProducts) =>
+          previousProducts.map((product) =>
+            product._id === editingProduct._id ? response.data : product,
+          ),
+        );
+
+        alert("Product updated successfully!");
+      } else {
+        // CREATE
+        const response = await axios.post(API_URL, {
+          name: formData.name,
+          price: Number(formData.price),
+          description: formData.description,
+        });
+
+        setProducts((previousProducts) => [...previousProducts, response.data]);
+
+        alert("Product added successfully!");
+      }
+
+      resetForm();
+    } catch (error) {
+      console.error("Error saving product:", error);
+
+      alert(
+        error.response?.data?.error ||
+          "Something went wrong while saving the product.",
+      );
+    }
+  };
+
+  // Edit Product
+
+  const handleEdit = (product) => {
+    setEditingProduct(product);
+
+    setFormData({
+      name: product.name,
+      price: product.price,
+      description: product.description || "",
+    });
+
+    setShowForm(true);
+  };
+
+  // DELETE Product
+
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this product?",
+    );
+
+    if (!confirmDelete) {
+      return;
+    }
+
+    try {
+      await axios.delete(`${API_URL}/${id}`);
+
+      setProducts((previousProducts) =>
+        previousProducts.filter((product) => product._id !== id),
+      );
+
+      alert("Product deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting product:", error);
+
+      alert(
+        error.response?.data?.error ||
+          "Something went wrong while deleting the product.",
+      );
+    }
+  };
+
+  // Reset Form
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      price: "",
+      description: "",
+    });
+
+    setEditingProduct(null);
+    setShowForm(false);
+  };
 
   return (
     <div className="App">
       <h1>My MERN Store</h1>
 
+      {/* Add Product Button */}
+      {!showForm && (
+        <button className="add-product-btn" onClick={() => setShowForm(true)}>
+          + Add Product
+        </button>
+      )}
+
+      {/* Add / Edit Form */}
+      {showForm && (
+        <form className="product-form" onSubmit={handleSubmit}>
+          <h2>{editingProduct ? "Edit Product" : "Add New Product"}</h2>
+
+          <input
+            type="text"
+            name="name"
+            placeholder="Product name"
+            value={formData.name}
+            onChange={handleChange}
+          />
+
+          <input
+            type="number"
+            name="price"
+            placeholder="Price"
+            value={formData.price}
+            onChange={handleChange}
+          />
+
+          <textarea
+            name="description"
+            placeholder="Product description"
+            value={formData.description}
+            onChange={handleChange}
+          />
+
+          <div className="form-buttons">
+            <button type="submit">
+              {editingProduct ? "Update Product" : "Add Product"}
+            </button>
+
+            <button type="button" onClick={resetForm}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* Products */}
       {loading ? (
         <p>Loading products...</p>
       ) : (
         <div className="product-list">
           {products.length === 0 ? (
-            <p>No products found. Add some from the backend!</p>
+            <p>No products found. Add your first product!</p>
           ) : (
             products.map((product) => (
               <ProductCard
                 key={product._id}
+                id={product._id}
                 name={product.name}
                 price={product.price}
                 description={product.description}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
               />
             ))
           )}
