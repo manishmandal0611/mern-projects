@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import ProductCard from './components/ProductCard';
-import './App.css';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import ProductCard from "./components/ProductCard";
+import "./App.css";
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -9,7 +9,8 @@ function App() {
 
   // Backend se data fetch karna
   useEffect(() => {
-    axios.get('http://localhost:5000/api/products')
+    axios
+      .get("https://card-component-backend.onrender.com/api/products")
       .then((response) => {
         setProducts(response.data);
         setLoading(false);
@@ -23,7 +24,7 @@ function App() {
   return (
     <div className="App">
       <h1>My MERN Store</h1>
-      
+
       {loading ? (
         <p>Loading products...</p>
       ) : (
@@ -32,11 +33,11 @@ function App() {
             <p>No products found. Add some from the backend!</p>
           ) : (
             products.map((product) => (
-              <ProductCard 
-                key={product._id} 
-                name={product.name} 
-                price={product.price} 
-                description={product.description} 
+              <ProductCard
+                key={product._id}
+                name={product.name}
+                price={product.price}
+                description={product.description}
               />
             ))
           )}
