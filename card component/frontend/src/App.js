@@ -18,10 +18,6 @@ function App() {
     description: "",
   });
 
-  // =========================
-  // GET PRODUCTS
-  // =========================
-
   const fetchProducts = async () => {
     try {
       const response = await axios.get(API_URL);
@@ -37,10 +33,6 @@ function App() {
     fetchProducts();
   }, []);
 
-  // =========================
-  // FORM INPUT
-  // =========================
-
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -49,10 +41,6 @@ function App() {
       [name]: value,
     }));
   };
-
-  // =========================
-  // ADD / UPDATE PRODUCT
-  // =========================
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -101,10 +89,6 @@ function App() {
     }
   };
 
-  // =========================
-  // EDIT PRODUCT
-  // =========================
-
   const handleEdit = (product) => {
     setEditingProduct(product);
 
@@ -116,10 +100,6 @@ function App() {
 
     setShowForm(true);
   };
-
-  // =========================
-  // DELETE PRODUCT
-  // =========================
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -161,10 +141,6 @@ function App() {
     }
   };
 
-  // =========================
-  // RESET FORM
-  // =========================
-
   const resetForm = () => {
     setFormData({
       name: "",
@@ -175,10 +151,6 @@ function App() {
     setEditingProduct(null);
     setShowForm(false);
   };
-
-  // =========================
-  // UI
-  // =========================
 
   return (
     <div className="App">
