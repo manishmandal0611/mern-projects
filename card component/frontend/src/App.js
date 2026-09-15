@@ -18,7 +18,9 @@ function App() {
     description: "",
   });
 
-  // GET - Fetch Products
+  // =========================
+  // GET PRODUCTS
+  // =========================
 
   const fetchProducts = async () => {
     try {
@@ -35,7 +37,9 @@ function App() {
     fetchProducts();
   }, []);
 
-  // Form Input Change
+  // =========================
+  // FORM INPUT
+  // =========================
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -45,6 +49,10 @@ function App() {
       [name]: value,
     }));
   };
+
+  // =========================
+  // ADD / UPDATE PRODUCT
+  // =========================
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -56,7 +64,6 @@ function App() {
 
     try {
       if (editingProduct) {
-        // UPDATE
         const response = await axios.put(`${API_URL}/${editingProduct._id}`, {
           name: formData.name,
           price: Number(formData.price),
@@ -71,7 +78,6 @@ function App() {
 
         alert("Product updated successfully!");
       } else {
-        // CREATE
         const response = await axios.post(API_URL, {
           name: formData.name,
           price: Number(formData.price),
@@ -88,13 +94,16 @@ function App() {
       console.error("Error saving product:", error);
 
       alert(
-        error.response?.data?.error ||
+        error.response?.data?.message ||
+          error.response?.data?.error ||
           "Something went wrong while saving the product.",
       );
     }
   };
 
-  // Edit Product
+  // =========================
+  // EDIT PRODUCT
+  // =========================
 
   const handleEdit = (product) => {
     setEditingProduct(product);
@@ -108,7 +117,9 @@ function App() {
     setShowForm(true);
   };
 
-  // DELETE Product
+  // =========================
+  // DELETE PRODUCT
+  // =========================
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -120,7 +131,12 @@ function App() {
     }
 
     try {
-      await axios.delete(`${API_URL}/${id}`);
+      console.log("Deleting product ID:", id);
+      console.log("Delete URL:", `${API_URL}/${id}`);
+
+      const response = await axios.delete(`${API_URL}/${id}`);
+
+      console.log("Delete response:", response.data);
 
       setProducts((previousProducts) =>
         previousProducts.filter((product) => product._id !== id),
@@ -128,16 +144,26 @@ function App() {
 
       alert("Product deleted successfully!");
     } catch (error) {
-      console.error("Error deleting product:", error);
+      console.error("DELETE ERROR:", error);
+      console.error("DELETE RESPONSE:", error.response);
+      console.error("DELETE STATUS:", error.response?.status);
+      console.error("DELETE DATA:", error.response?.data);
 
       alert(
-        error.response?.data?.error ||
-          "Something went wrong while deleting the product.",
+        `Delete failed!\n\nStatus: ${
+          error.response?.status || "No response"
+        }\nMessage: ${
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message
+        }`,
       );
     }
   };
 
-  // Reset Form
+  // =========================
+  // RESET FORM
+  // =========================
 
   const resetForm = () => {
     setFormData({
@@ -150,18 +176,20 @@ function App() {
     setShowForm(false);
   };
 
+  // =========================
+  // UI
+  // =========================
+
   return (
     <div className="App">
       <h1>My MERN Store</h1>
 
-      {/* Add Product Button */}
       {!showForm && (
         <button className="add-product-btn" onClick={() => setShowForm(true)}>
           + Add Product
         </button>
       )}
 
-      {/* Add / Edit Form */}
       {showForm && (
         <form className="product-form" onSubmit={handleSubmit}>
           <h2>{editingProduct ? "Edit Product" : "Add New Product"}</h2>
@@ -201,7 +229,6 @@ function App() {
         </form>
       )}
 
-      {/* Products */}
       {loading ? (
         <p>Loading products...</p>
       ) : (
