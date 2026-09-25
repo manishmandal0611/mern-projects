@@ -1,37 +1,41 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import './styles/App.css'; // CSS folder se file import
+import { useState, useEffect } from "react";
+import axios from "axios";
+import "./styles/App.css";
 
-const API_URL = 'http://localhost:5000';
+const API_URL = "https://todo-app-list-cued.onrender.com";
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem('token') || '');
-  const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || '');
+  const [token, setToken] = useState(localStorage.getItem("token") || "");
+  const [userEmail, setUserEmail] = useState(
+    localStorage.getItem("userEmail") || "",
+  );
 
   // Theme State
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
+  const [darkMode, setDarkMode] = useState(
+    () => localStorage.getItem("theme") === "dark",
+  );
 
   // Auth states
   const [isRegistering, setIsRegistering] = useState(false);
-  const [authEmail, setAuthEmail] = useState('');
-  const [authPassword, setAuthPassword] = useState('');
-  const [authError, setAuthError] = useState('');
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authError, setAuthError] = useState("");
 
   // Task states
   const [tasks, setTasks] = useState([]);
-  const [text, setText] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [text, setText] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
 
   // Inline Edit states
   const [editingId, setEditingId] = useState(null);
-  const [editText, setEditText] = useState('');
-  const [editDueDate, setEditDueDate] = useState('');
+  const [editText, setEditText] = useState("");
+  const [editDueDate, setEditDueDate] = useState("");
 
   useEffect(() => {
-    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
-    document.body.className = darkMode ? 'dark-mode' : 'light-mode';
+    localStorage.setItem("theme", darkMode ? "dark" : "light");
+    document.body.className = darkMode ? "dark-mode" : "light-mode";
   }, [darkMode]);
 
   const checkIsOverdue = (taskDateStr, isCompleted) => {
@@ -49,8 +53,8 @@ function App() {
 
   const handleAuth = async (e) => {
     e.preventDefault();
-    setAuthError('');
-    const endpoint = isRegistering ? '/auth/register' : '/auth/login';
+    setAuthError("");
+    const endpoint = isRegistering ? "/auth/register" : "/auth/login";
 
     try {
       const res = await axios.post(`${API_URL}${endpoint}`, {
@@ -59,20 +63,20 @@ function App() {
       });
       setToken(res.data.token);
       setUserEmail(res.data.email);
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('userEmail', res.data.email);
-      setAuthPassword('');
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("userEmail", res.data.email);
+      setAuthPassword("");
     } catch (err) {
-      setAuthError(err.response?.data?.error || 'Authentication failed');
+      setAuthError(err.response?.data?.error || "Authentication failed");
     }
   };
 
   const handleLogout = () => {
-    setToken('');
-    setUserEmail('');
+    setToken("");
+    setUserEmail("");
     setTasks([]);
-    localStorage.removeItem('token');
-    localStorage.removeItem('userEmail');
+    localStorage.removeItem("token");
+    localStorage.removeItem("userEmail");
   };
 
   const fetchTasks = async () => {
@@ -95,11 +99,11 @@ function App() {
       const res = await axios.post(
         `${API_URL}/add`,
         { text, dueDate: dueDate || null },
-        getAuthHeader()
+        getAuthHeader(),
       );
       setTasks([res.data, ...tasks]);
-      setText('');
-      setDueDate('');
+      setText("");
+      setDueDate("");
     } catch (err) {
       console.error(err);
     }
@@ -110,7 +114,7 @@ function App() {
       const res = await axios.put(
         `${API_URL}/tasks/${task._id}`,
         { completed: !task.completed },
-        getAuthHeader()
+        getAuthHeader(),
       );
       setTasks(tasks.map((t) => (t._id === task._id ? res.data : t)));
     } catch (err) {
@@ -121,7 +125,7 @@ function App() {
   const startEdit = (task) => {
     setEditingId(task._id);
     setEditText(task.text);
-    setEditDueDate(task.dueDate ? task.dueDate.split('T')[0] : '');
+    setEditDueDate(task.dueDate ? task.dueDate.split("T")[0] : "");
   };
 
   const handleSaveEdit = async (id) => {
@@ -130,12 +134,12 @@ function App() {
       const res = await axios.put(
         `${API_URL}/tasks/${id}`,
         { text: editText.trim(), dueDate: editDueDate || null },
-        getAuthHeader()
+        getAuthHeader(),
       );
       setTasks(tasks.map((t) => (t._id === id ? res.data : t)));
       setEditingId(null);
-      setEditText('');
-      setEditDueDate('');
+      setEditText("");
+      setEditDueDate("");
     } catch (err) {
       console.error(err);
     }
@@ -151,205 +155,264 @@ function App() {
   };
 
   const filteredTasks = tasks.filter((t) => {
-    const matchesSearch = (t.text || '').toLowerCase().includes(searchQuery.toLowerCase().trim());
+    const matchesSearch = (t.text || "")
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase().trim());
     const matchesStatus =
-      filterStatus === 'all' ? true : filterStatus === 'active' ? !t.completed : t.completed;
+      filterStatus === "all"
+        ? true
+        : filterStatus === "active"
+          ? !t.completed
+          : t.completed;
     return matchesSearch && matchesStatus;
   });
 
   const ThemeToggleBtn = () => (
-    <button className="btn-theme" onClick={() => setDarkMode(!darkMode)}>
-      {darkMode ? '☀️ Light' : '🌙 Dark'}
+    <button
+      className="btn-theme"
+      onClick={() => setDarkMode(!darkMode)}
+      type="button"
+    >
+      {darkMode ? "☀️ Light" : "🌙 Dark"}
     </button>
   );
 
-  const themeClass = darkMode ? 'dark-theme' : 'light-theme';
+  const themeClass = darkMode ? "dark-theme" : "light-theme";
 
   // --- Auth View ---
   if (!token) {
     return (
-      <div className={`app-container auth-container ${themeClass}`}>
-        <div className="app-header">
-          <h2>{isRegistering ? 'Create Account' : 'Welcome Back'}</h2>
-          <ThemeToggleBtn />
+      <div className={`page-wrapper ${themeClass}`}>
+        <div className="main-title-section">
+          <h1 className="hero-heading">
+            <span className="app-icon">📝</span> To-Do App List
+          </h1>
+          <p className="hero-subtext">
+            Manage your daily tasks and workflow with ease
+          </p>
         </div>
 
-        {authError && <p style={{ color: '#ff4d4f', fontSize: '14px' }}>{authError}</p>}
+        <div className={`app-container auth-container ${themeClass}`}>
+          <div className="app-header">
+            <h2>{isRegistering ? "Create Account" : "Welcome Back"}</h2>
+            <ThemeToggleBtn />
+          </div>
 
-        <form onSubmit={handleAuth} className="auth-form">
-          <input
-            className="input-field"
-            type="email"
-            placeholder="Email address"
-            required
-            value={authEmail}
-            onChange={(e) => setAuthEmail(e.target.value)}
-          />
-          <input
-            className="input-field"
-            type="password"
-            placeholder="Password"
-            required
-            value={authPassword}
-            onChange={(e) => setAuthPassword(e.target.value)}
-          />
-          <button type="submit" className="btn-primary">
-            {isRegistering ? 'Sign Up' : 'Log In'}
-          </button>
-        </form>
+          {authError && <p className="error-message">{authError}</p>}
 
-        <p className="sub-text" style={{ textAlign: 'center', marginTop: '16px' }}>
-          {isRegistering ? 'Already have an account?' : "Don't have an account?"}{' '}
-          <button
-            onClick={() => { setIsRegistering(!isRegistering); setAuthError(''); }}
-            style={{ background: 'none', border: 'none', color: '#007bff', cursor: 'pointer', textDecoration: 'underline' }}
-          >
-            {isRegistering ? 'Log in here' : 'Sign up here'}
-          </button>
-        </p>
+          <form onSubmit={handleAuth} className="auth-form">
+            <input
+              className="input-field"
+              type="email"
+              placeholder="Email address"
+              required
+              value={authEmail}
+              onChange={(e) => setAuthEmail(e.target.value)}
+            />
+            <input
+              className="input-field"
+              type="password"
+              placeholder="Password"
+              required
+              value={authPassword}
+              onChange={(e) => setAuthPassword(e.target.value)}
+            />
+            <button type="submit" className="btn-primary btn-auth-submit">
+              {isRegistering ? "Sign Up" : "Log In"}
+            </button>
+          </form>
+
+          <p className="sub-text auth-switch-text">
+            {isRegistering
+              ? "Already have an account?"
+              : "Don't have an account?"}{" "}
+            <button
+              type="button"
+              className="link-btn"
+              onClick={() => {
+                setIsRegistering(!isRegistering);
+                setAuthError("");
+              }}
+            >
+              {isRegistering ? "Log in here" : "Sign up here"}
+            </button>
+          </p>
+        </div>
       </div>
     );
   }
 
   // --- Main Tasks View ---
   return (
-    <div className={`app-container ${themeClass}`}>
-      <div className="app-header">
-        <div>
-          <h2>To-Do List</h2>
-          <small className="sub-text">{userEmail}</small>
-        </div>
-        <div className="header-actions">
-          <ThemeToggleBtn />
-          <button className="btn-danger" onClick={handleLogout}>Logout</button>
-        </div>
+    <div className={`page-wrapper ${themeClass}`}>
+      <div className="main-title-section">
+        <h1 className="hero-heading">
+          <span className="app-icon">📝</span> To-Do App List
+        </h1>
       </div>
 
-      <form onSubmit={handleAddTask} className="task-form">
-        <input
-          className="input-field"
-          style={{ flex: 2 }}
-          type="text"
-          placeholder="Enter a task..."
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
-        <input
-          className="input-field"
-          style={{ flex: 1.2 }}
-          type="date"
-          value={dueDate}
-          onChange={(e) => setDueDate(e.target.value)}
-        />
-        <button type="submit" className="btn-primary">Add Task</button>
-      </form>
+      <div className={`app-container ${themeClass}`}>
+        <div className="app-header">
+          <div>
+            <h2>Dashboard</h2>
+            <small className="sub-text">{userEmail}</small>
+          </div>
+          <div className="header-actions">
+            <ThemeToggleBtn />
+            <button className="btn-danger" onClick={handleLogout} type="button">
+              Logout
+            </button>
+          </div>
+        </div>
 
-      <input
-        className="input-field search-input"
-        type="text"
-        placeholder="Search tasks..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-      />
-
-      <div className="tabs-container">
-        {['all', 'active', 'completed'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setFilterStatus(tab)}
-            className={`tab-btn ${filterStatus === tab ? 'active' : ''}`}
-          >
-            {tab}
+        <form onSubmit={handleAddTask} className="task-form">
+          <input
+            className="input-field task-input"
+            type="text"
+            placeholder="Enter a task..."
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+          <input
+            className="input-field date-input"
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+          />
+          <button type="submit" className="btn-primary">
+            Add Task
           </button>
-        ))}
-      </div>
+        </form>
 
-      <ul className="task-list">
-        {filteredTasks.length === 0 ? (
-          <p className="sub-text" style={{ textAlign: 'center', padding: '20px 0' }}>No tasks found.</p>
-        ) : (
-          filteredTasks.map((t) => {
-            const isOverdue = checkIsOverdue(t.dueDate, t.completed);
+        <input
+          className="input-field search-input"
+          type="text"
+          placeholder="Search tasks..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
 
-            return (
-              <li
-                key={t._id}
-                className={`task-item ${t.completed ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}`}
-              >
-                <div className="task-left">
-                  <input
-                    type="checkbox"
-                    checked={t.completed}
-                    onChange={() => handleToggleComplete(t)}
-                    disabled={editingId === t._id}
-                    style={{ cursor: 'pointer', width: '16px', height: '16px', marginTop: '3px' }}
-                  />
+        <div className="tabs-container">
+          {["all", "active", "completed"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setFilterStatus(tab)}
+              className={`tab-btn ${filterStatus === tab ? "active" : ""}`}
+              type="button"
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </div>
 
-                  {editingId === t._id ? (
-                    <div style={{ display: 'flex', gap: '6px', flex: 1 }}>
-                      <input
-                        className="input-field"
-                        style={{ flex: 2, padding: '6px 8px' }}
-                        type="text"
-                        value={editText}
-                        autoFocus
-                        onChange={(e) => setEditText(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSaveEdit(t._id);
-                          if (e.key === 'Escape') setEditingId(null);
-                        }}
-                      />
-                      <input
-                        className="input-field"
-                        style={{ flex: 1, padding: '4px 6px' }}
-                        type="date"
-                        value={editDueDate}
-                        onChange={(e) => setEditDueDate(e.target.value)}
-                      />
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span className={`task-text ${t.completed ? 'completed-text' : ''}`}>
-                          {t.text}
-                        </span>
-                        {isOverdue && <span className="overdue-badge">⚠️ Overdue</span>}
+        <ul className="task-list">
+          {filteredTasks.length === 0 ? (
+            <p className="sub-text empty-msg">No tasks found.</p>
+          ) : (
+            filteredTasks.map((t) => {
+              const isOverdue = checkIsOverdue(t.dueDate, t.completed);
+
+              return (
+                <li
+                  key={t._id}
+                  className={`task-item ${t.completed ? "completed" : ""} ${isOverdue ? "overdue" : ""}`}
+                >
+                  <div className="task-left">
+                    <input
+                      type="checkbox"
+                      checked={t.completed}
+                      onChange={() => handleToggleComplete(t)}
+                      disabled={editingId === t._id}
+                      className="task-checkbox"
+                    />
+
+                    {editingId === t._id ? (
+                      <div className="edit-box-row">
+                        <input
+                          className="input-field edit-text-input"
+                          type="text"
+                          value={editText}
+                          autoFocus
+                          onChange={(e) => setEditText(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleSaveEdit(t._id);
+                            if (e.key === "Escape") setEditingId(null);
+                          }}
+                        />
+                        <input
+                          className="input-field edit-date-input"
+                          type="date"
+                          value={editDueDate}
+                          onChange={(e) => setEditDueDate(e.target.value)}
+                        />
                       </div>
-                      {t.dueDate && (
-                        <span className={`due-date-text ${isOverdue ? 'overdue-date' : 'sub-text'}`}>
-                          📅 Due: {new Date(t.dueDate).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
+                    ) : (
+                      <div className="task-detail-col">
+                        <div className="task-text-row">
+                          <span
+                            className={`task-text ${t.completed ? "completed-text" : ""}`}
+                          >
+                            {t.text}
+                          </span>
+                          {isOverdue && (
+                            <span className="overdue-badge">⚠️ Overdue</span>
+                          )}
+                        </div>
+                        {t.dueDate && (
+                          <span
+                            className={`due-date-text ${isOverdue ? "overdue-date" : "sub-text"}`}
+                          >
+                            📅 Due: {new Date(t.dueDate).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
-                <div className="task-actions">
-                  {editingId === t._id ? (
-                    <>
-                      <button className="btn-success" onClick={() => handleSaveEdit(t._id)}>Save</button>
-                      <button className="btn-secondary" onClick={() => setEditingId(null)}>Cancel</button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        className="btn-edit"
-                        onClick={() => startEdit(t)}
-                        disabled={t.completed}
-                      >
-                        Edit
-                      </button>
-                      <button className="btn-danger" onClick={() => handleDeleteTask(t._id)}>
-                        Delete
-                      </button>
-                    </>
-                  )}
-                </div>
-              </li>
-            );
-          })
-        )}
-      </ul>
+                  <div className="task-actions">
+                    {editingId === t._id ? (
+                      <>
+                        <button
+                          className="btn-success"
+                          onClick={() => handleSaveEdit(t._id)}
+                          type="button"
+                        >
+                          Save
+                        </button>
+                        <button
+                          className="btn-secondary"
+                          onClick={() => setEditingId(null)}
+                          type="button"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          className="btn-edit"
+                          onClick={() => startEdit(t)}
+                          disabled={t.completed}
+                          type="button"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="btn-danger"
+                          onClick={() => handleDeleteTask(t._id)}
+                          type="button"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </li>
+              );
+            })
+          )}
+        </ul>
+      </div>
     </div>
   );
 }
