@@ -18,6 +18,8 @@ mongoose
   .catch((err) => console.error('MongoDB error:', err));
 
 const userSchema = new mongoose.Schema({
+  firstName: { type: String, required: true, trim: true },
+  lastName: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true },
 });
@@ -51,8 +53,8 @@ const verifyToken = (req, res, next) => {
 
 app.post('/auth/register', async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
+    const { firstName, lastName, email, password } = req.body;
+    if (!firstName || !lastName || !email || !password) {
       return res.status(400).json({ error: 'Please enter all fields' });
     }
 
@@ -64,10 +66,20 @@ app.post('/auth/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const user = await User.create({ email, password: hashedPassword });
+    const user = await User.create({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email,
+      password: hashedPassword,
+    });
+
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
-    res.status(201).json({ token, email: user.email });
+    res.status(201).json({
+      token,
+      email: user.email,
+      fullName: `${user.firstName} ${user.lastName}`,
+    });
   } catch (err) {
     res.status(500).json({ error: 'Server error during registration' });
   }
@@ -87,7 +99,12 @@ app.post('/auth/login', async (req, res) => {
     }
 
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
-    res.status(200).json({ token, email: user.email });
+
+    res.status(200).json({
+      token,
+      email: user.email,
+      fullName: `${user.firstName} ${user.lastName}`,
+    });
   } catch (err) {
     res.status(500).json({ error: 'Server error during login' });
   }

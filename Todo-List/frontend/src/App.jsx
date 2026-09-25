@@ -1,153 +1,162 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./styles/App.css";
 
 const BACKEND_URL = "https://todo-app-list-cued.onrender.com";
 
-export default function App() {
-  const [token, setToken] = useState(() => localStorage.getItem("token") || "");
-  const [userEmail, setUserEmail] = useState(() => localStorage.getItem("userEmail") || "");
-  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("app_theme") === "dark");
+function App() {
+  const [token, setToken] = useState(localStorage.getItem("token") || "");
+  const [userEmail, setUserEmail] = useState(localStorage.getItem("userEmail") || "");
+  const [fullName, setFullName] = useState(localStorage.getItem("fullName") || "");
+  const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
 
   const [authMode, setAuthMode] = useState("login");
-  const [emailInput, setEmailInput] = useState("");
-  const [passInput, setPassInput] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  const [todoList, setTodoList] = useState([]);
-  const [taskTitle, setTaskTitle] = useState("");
-  const [taskDeadline, setTaskDeadline] = useState("");
-  const [searchKey, setSearchKey] = useState("");
-  const [activeTab, setActiveTab] = useState("all");
+  const [tasks, setTasks] = useState([]);
+  const [taskText, setTaskText] = useState("");
+  const [taskDate, setTaskDate] = useState("");
+  const [search, setSearch] = useState("");
+  const [tab, setTab] = useState("all");
 
-  const [editTaskId, setEditTaskId] = useState(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editDeadline, setEditDeadline] = useState("");
+  const [editId, setEditId] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [editDate, setEditDate] = useState("");
 
   useEffect(() => {
-    localStorage.setItem("app_theme", isDarkMode ? "dark" : "light");
-    document.body.className = isDarkMode ? "dark-mode" : "light-mode";
-  }, [isDarkMode]);
+    localStorage.setItem("theme", darkMode ? "dark" : "light");
+    document.body.className = darkMode ? "dark-mode" : "light-mode";
+  }, [darkMode]);
 
-  const authHeaders = useMemo(() => ({
+  const authHeader = {
     headers: { Authorization: `Bearer ${token}` }
-  }), [token]);
+  };
 
-  const handleLogout = useCallback(() => {
+  const handleLogout = () => {
     setToken("");
     setUserEmail("");
-    setTodoList([]);
+    setFullName("");
+    setTasks([]);
     localStorage.removeItem("token");
     localStorage.removeItem("userEmail");
-  }, []);
+    localStorage.removeItem("fullName");
+  };
 
-  const loadTasks = useCallback(async () => {
+  const loadTasks = async () => {
     try {
-      const { data } = await axios.get(`${BACKEND_URL}/tasks`, authHeaders);
-      setTodoList(data);
+      const res = await axios.get(`${BACKEND_URL}/tasks`, authHeader);
+      setTasks(res.data);
     } catch (err) {
       if (err.response?.status === 401) {
         handleLogout();
       }
     }
-  }, [authHeaders, handleLogout]);
+  };
 
   useEffect(() => {
     if (token) {
       loadTasks();
     }
-  }, [token, loadTasks]);
+  }, [token]);
 
-  const onAuthSubmit = async (e) => {
+  const handleAuth = async (e) => {
     e.preventDefault();
-    setErrorMsg("");
-    const path = authMode === "signup" ? "/auth/register" : "/auth/login";
+    setError("");
+
+    const isSignup = authMode === "signup";
+    const endpoint = isSignup ? "/auth/register" : "/auth/login";
+    const dataToSend = isSignup
+      ? { firstName, lastName, email, password }
+      : { email, password };
 
     try {
-      const res = await axios.post(`${BACKEND_URL}${path}`, {
-        email: emailInput,
-        password: passInput,
-      });
+      const res = await axios.post(`${BACKEND_URL}${endpoint}`, dataToSend);
+      setToken(res.data.token);
+      setUserEmail(res.data.email);
+      setFullName(res.data.fullName || "");
 
-      const authToken = res.data.token;
-      const userMail = res.data.email;
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("userEmail", res.data.email);
+      localStorage.setItem("fullName", res.data.fullName || "");
 
-      setToken(authToken);
-      setUserEmail(userMail);
-      localStorage.setItem("token", authToken);
-      localStorage.setItem("userEmail", userMail);
-      setPassInput("");
+      setFirstName("");
+      setLastName("");
+      setPassword("");
     } catch (err) {
-      setErrorMsg(err.response?.data?.error || "Invalid credentials, please try again.");
+      setError(err.response?.data?.error || "Something went wrong");
     }
   };
 
-  const onAddTask = async (e) => {
+  const handleAddTask = async (e) => {
     e.preventDefault();
-    const cleanTitle = taskTitle.trim();
-    if (!cleanTitle) return;
+    if (!taskText.trim()) return;
 
     try {
       const res = await axios.post(
         `${BACKEND_URL}/add`,
-        { text: cleanTitle, dueDate: taskDeadline || null },
-        authHeaders
+        { text: taskText.trim(), dueDate: taskDate || null },
+        authHeader
       );
-      setTodoList((prev) => [res.data, ...prev]);
-      setTaskTitle("");
-      setTaskDeadline("");
+      setTasks([res.data, ...tasks]);
+      setTaskText("");
+      setTaskDate("");
     } catch (err) {
-      console.error("Task add failed:", err);
+      console.error(err);
     }
   };
 
-  const onToggleStatus = async (item) => {
+  const handleToggle = async (item) => {
     try {
       const res = await axios.put(
         `${BACKEND_URL}/tasks/${item._id}`,
         { completed: !item.completed },
-        authHeaders
+        authHeader
       );
-      setTodoList((prev) => prev.map((t) => (t._id === item._id ? res.data : t)));
+      setTasks(tasks.map((t) => (t._id === item._id ? res.data : t)));
     } catch (err) {
-      console.error("Toggle error:", err);
+      console.error(err);
     }
   };
 
-  const initEdit = (item) => {
-    setEditTaskId(item._id);
-    setEditTitle(item.text);
-    setEditDeadline(item.dueDate ? item.dueDate.split("T")[0] : "");
+  const startEdit = (item) => {
+    setEditId(item._id);
+    setEditText(item.text);
+    setEditDate(item.dueDate ? item.dueDate.split("T")[0] : "");
   };
 
-  const onUpdateTask = async (id) => {
-    if (!editTitle.trim()) return;
+  const handleSaveEdit = async (id) => {
+    if (!editText.trim()) return;
+
     try {
       const res = await axios.put(
         `${BACKEND_URL}/tasks/${id}`,
-        { text: editTitle.trim(), dueDate: editDeadline || null },
-        authHeaders
+        { text: editText.trim(), dueDate: editDate || null },
+        authHeader
       );
-      setTodoList((prev) => prev.map((t) => (t._id === id ? res.data : t)));
-      setEditTaskId(null);
-      setEditTitle("");
-      setEditDeadline("");
+      setTasks(tasks.map((t) => (t._id === id ? res.data : t)));
+      setEditId(null);
+      setEditText("");
+      setEditDate("");
     } catch (err) {
-      console.error("Update error:", err);
+      console.error(err);
     }
   };
 
-  const onRemoveTask = async (id) => {
+  const handleDelete = async (id) => {
     try {
-      await axios.delete(`${BACKEND_URL}/tasks/${id}`, authHeaders);
-      setTodoList((prev) => prev.filter((t) => t._id !== id));
+      await axios.delete(`${BACKEND_URL}/tasks/${id}`, authHeader);
+      setTasks(tasks.filter((t) => t._id !== id));
     } catch (err) {
-      console.error("Delete error:", err);
+      console.error(err);
     }
   };
 
-  const isTaskOverdue = (dateStr, isDone) => {
-    if (!dateStr || isDone) return false;
+  const isOverdue = (dateStr, completed) => {
+    if (!dateStr || completed) return false;
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     const due = new Date(dateStr);
@@ -155,21 +164,19 @@ export default function App() {
     return due < now;
   };
 
-  const visibleTasks = useMemo(() => {
-    return todoList.filter((item) => {
-      const matches = (item.text || "").toLowerCase().includes(searchKey.toLowerCase().trim());
-      if (!matches) return false;
-      if (activeTab === "active") return !item.completed;
-      if (activeTab === "completed") return item.completed;
-      return true;
-    });
-  }, [todoList, searchKey, activeTab]);
+  const filteredTasks = tasks.filter((item) => {
+    const matchText = (item.text || "").toLowerCase().includes(search.toLowerCase().trim());
+    if (!matchText) return false;
+    if (tab === "active") return !item.completed;
+    if (tab === "completed") return item.completed;
+    return true;
+  });
 
-  const currentTheme = isDarkMode ? "dark-theme" : "light-theme";
+  const themeClass = darkMode ? "dark-theme" : "light-theme";
 
   if (!token) {
     return (
-      <div className={`page-wrapper ${currentTheme}`}>
+      <div className={`page-wrapper ${themeClass}`}>
         <div className="main-title-section">
           <h1 className="hero-heading">
             <span className="app-icon">📝</span> To-Do App List
@@ -177,36 +184,57 @@ export default function App() {
           <p className="hero-subtext">Manage your daily tasks and workflow with ease</p>
         </div>
 
-        <div className={`app-container auth-container ${currentTheme}`}>
+        <div className={`app-container auth-container ${themeClass}`}>
           <div className="app-header">
             <h2>{authMode === "signup" ? "Create Account" : "Welcome Back"}</h2>
             <button
               className="btn-theme"
-              onClick={() => setIsDarkMode((prev) => !prev)}
+              onClick={() => setDarkMode(!darkMode)}
               type="button"
             >
-              {isDarkMode ? "☀️ Light" : "🌙 Dark"}
+              {darkMode ? "☀️ Light" : "🌙 Dark"}
             </button>
           </div>
 
-          {errorMsg && <p className="error-message">{errorMsg}</p>}
+          {error && <p className="error-message">{error}</p>}
 
-          <form onSubmit={onAuthSubmit} className="auth-form">
+          <form onSubmit={handleAuth} className="auth-form">
+            {authMode === "signup" && (
+              <div className="name-inputs-row">
+                <input
+                  className="input-field"
+                  type="text"
+                  placeholder="First name"
+                  required
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+                <input
+                  className="input-field"
+                  type="text"
+                  placeholder="Last name"
+                  required
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
+            )}
+
             <input
               className="input-field"
               type="email"
               placeholder="Email address"
               required
-              value={emailInput}
-              onChange={(e) => setEmailInput(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
             <input
               className="input-field"
               type="password"
               placeholder="Password"
               required
-              value={passInput}
-              onChange={(e) => setPassInput(e.target.value)}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
             <button type="submit" className="btn-primary btn-auth-submit">
               {authMode === "signup" ? "Sign Up" : "Log In"}
@@ -219,8 +247,8 @@ export default function App() {
               type="button"
               className="link-btn"
               onClick={() => {
-                setAuthMode((prev) => (prev === "login" ? "signup" : "login"));
-                setErrorMsg("");
+                setAuthMode(authMode === "login" ? "signup" : "login");
+                setError("");
               }}
             >
               {authMode === "signup" ? "Log in here" : "Sign up here"}
@@ -232,26 +260,24 @@ export default function App() {
   }
 
   return (
-    <div className={`page-wrapper ${currentTheme}`}>
+    <div className={`page-wrapper ${themeClass}`}>
       <div className="main-title-section">
         <h1 className="hero-heading">
           <span className="app-icon">📝</span> To-Do App List
         </h1>
       </div>
 
-      <div className={`app-container ${currentTheme}`}>
-        <div className="app-header">
-          <div>
-            <h2>Dashboard</h2>
-            <small className="sub-text">{userEmail}</small>
-          </div>
+      <div className={`app-container ${themeClass}`}>
+        <div className="dashboard-top-bar">
+          <div className="empty-spacer"></div>
+          <h2 className="dashboard-title">Dashboard</h2>
           <div className="header-actions">
             <button
               className="btn-theme"
-              onClick={() => setIsDarkMode((prev) => !prev)}
+              onClick={() => setDarkMode(!darkMode)}
               type="button"
             >
-              {isDarkMode ? "☀️ Light" : "🌙 Dark"}
+              {darkMode ? "☀️ Light" : "🌙 Dark"}
             </button>
             <button className="btn-danger" onClick={handleLogout} type="button">
               Logout
@@ -259,19 +285,24 @@ export default function App() {
           </div>
         </div>
 
-        <form onSubmit={onAddTask} className="task-form">
+        <div className="user-profile-info">
+          <h3>{fullName || "User Profile"}</h3>
+          <p>{userEmail}</p>
+        </div>
+
+        <form onSubmit={handleAddTask} className="task-form">
           <input
             className="input-field task-input"
             type="text"
             placeholder="Enter a task..."
-            value={taskTitle}
-            onChange={(e) => setTaskTitle(e.target.value)}
+            value={taskText}
+            onChange={(e) => setTaskText(e.target.value)}
           />
           <input
             className="input-field date-input"
             type="date"
-            value={taskDeadline}
-            onChange={(e) => setTaskDeadline(e.target.value)}
+            value={taskDate}
+            onChange={(e) => setTaskDate(e.target.value)}
           />
           <button type="submit" className="btn-primary">
             Add Task
@@ -282,30 +313,30 @@ export default function App() {
           className="input-field search-input"
           type="text"
           placeholder="Search tasks..."
-          value={searchKey}
-          onChange={(e) => setSearchKey(e.target.value)}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
         />
 
         <div className="tabs-container">
-          {["all", "active", "completed"].map((tab) => (
+          {["all", "active", "completed"].map((item) => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`tab-btn ${activeTab === tab ? "active" : ""}`}
+              key={item}
+              onClick={() => setTab(item)}
+              className={`tab-btn ${tab === item ? "active" : ""}`}
               type="button"
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {item.charAt(0).toUpperCase() + item.slice(1)}
             </button>
           ))}
         </div>
 
         <ul className="task-list">
-          {visibleTasks.length === 0 ? (
+          {filteredTasks.length === 0 ? (
             <p className="sub-text empty-msg">No tasks found.</p>
           ) : (
-            visibleTasks.map((item) => {
-              const overdue = isTaskOverdue(item.dueDate, item.completed);
-              const isCurrentEdit = editTaskId === item._id;
+            filteredTasks.map((item) => {
+              const overdue = isOverdue(item.dueDate, item.completed);
+              const isEditing = editId === item._id;
 
               return (
                 <li
@@ -316,29 +347,29 @@ export default function App() {
                     <input
                       type="checkbox"
                       checked={item.completed}
-                      onChange={() => onToggleStatus(item)}
-                      disabled={isCurrentEdit}
+                      onChange={() => handleToggle(item)}
+                      disabled={isEditing}
                       className="task-checkbox"
                     />
 
-                    {isCurrentEdit ? (
+                    {isEditing ? (
                       <div className="edit-box-row">
                         <input
                           className="input-field edit-text-input"
                           type="text"
-                          value={editTitle}
+                          value={editText}
                           autoFocus
-                          onChange={(e) => setEditTitle(e.target.value)}
+                          onChange={(e) => setEditText(e.target.value)}
                           onKeyDown={(e) => {
-                            if (e.key === "Enter") onUpdateTask(item._id);
-                            if (e.key === "Escape") setEditTaskId(null);
+                            if (e.key === "Enter") handleSaveEdit(item._id);
+                            if (e.key === "Escape") setEditId(null);
                           }}
                         />
                         <input
                           className="input-field edit-date-input"
                           type="date"
-                          value={editDeadline}
-                          onChange={(e) => setEditDeadline(e.target.value)}
+                          value={editDate}
+                          onChange={(e) => setEditDate(e.target.value)}
                         />
                       </div>
                     ) : (
@@ -359,12 +390,12 @@ export default function App() {
                   </div>
 
                   <div className="task-actions">
-                    {isCurrentEdit ? (
+                    {isEditing ? (
                       <>
-                        <button className="btn-success" onClick={() => onUpdateTask(item._id)} type="button">
+                        <button className="btn-success" onClick={() => handleSaveEdit(item._id)} type="button">
                           Save
                         </button>
-                        <button className="btn-secondary" onClick={() => setEditTaskId(null)} type="button">
+                        <button className="btn-secondary" onClick={() => setEditId(null)} type="button">
                           Cancel
                         </button>
                       </>
@@ -372,13 +403,13 @@ export default function App() {
                       <>
                         <button
                           className="btn-edit"
-                          onClick={() => initEdit(item)}
+                          onClick={() => startEdit(item)}
                           disabled={item.completed}
                           type="button"
                         >
                           Edit
                         </button>
-                        <button className="btn-danger" onClick={() => onRemoveTask(item._id)} type="button">
+                        <button className="btn-danger" onClick={() => handleDelete(item._id)} type="button">
                           Delete
                         </button>
                       </>
@@ -393,3 +424,5 @@ export default function App() {
     </div>
   );
 }
+
+export default App;
