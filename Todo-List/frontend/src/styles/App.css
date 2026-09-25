@@ -5,11 +5,20 @@
 }
 
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Page Layout & Centering */
+body.light-mode {
+  background-color: #f8f9fa;
+  color: #222222;
+}
+
+body.dark-mode {
+  background-color: #121212;
+  color: #f1f1f1;
+}
+
 .page-wrapper {
   min-height: 100vh;
   display: flex;
@@ -19,20 +28,6 @@ body {
   padding: 40px 16px;
 }
 
-/* Themes */
-body.light-mode,
-.page-wrapper.light-theme {
-  background-color: #f8f9fa;
-  color: #222222;
-}
-
-body.dark-mode,
-.page-wrapper.dark-theme {
-  background-color: #121212;
-  color: #f1f1f1;
-}
-
-/* Top App Header / Title */
 .main-title-section {
   text-align: center;
   margin-bottom: 24px;
@@ -65,7 +60,6 @@ body.dark-mode,
   color: #a0a0a0;
 }
 
-/* Containers */
 .app-container {
   width: 100%;
   max-width: 600px;
@@ -92,7 +86,6 @@ body.dark-mode,
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
 }
 
-/* Header inside Card */
 .app-header {
   display: flex;
   justify-content: space-between;
@@ -123,7 +116,6 @@ body.dark-mode,
   color: #a0a0a0;
 }
 
-/* Forms & Inputs */
 .task-form {
   display: flex;
   gap: 8px;
@@ -171,7 +163,6 @@ body.dark-mode,
   margin-bottom: 14px;
 }
 
-/* Buttons */
 button {
   font-family: inherit;
   cursor: pointer;
@@ -179,7 +170,7 @@ button {
 
 .btn-primary {
   padding: 10px 18px;
-  font-weight: bold;
+  font-weight: 600;
   background-color: #007bff;
   color: #ffffff;
   border: none;
@@ -230,7 +221,7 @@ button {
   border-radius: 20px;
   padding: 6px 14px;
   font-size: 13px;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .light-theme .btn-theme {
@@ -273,7 +264,6 @@ button {
   color: #007bff;
   font-weight: 600;
   text-decoration: underline;
-  cursor: pointer;
 }
 
 .auth-switch-text {
@@ -288,7 +278,6 @@ button {
   text-align: center;
 }
 
-/* Tabs */
 .tabs-container {
   display: flex;
   gap: 8px;
@@ -323,7 +312,6 @@ button {
   border-color: #333333;
 }
 
-/* Task List */
 .task-list {
   list-style: none;
   display: flex;
@@ -359,7 +347,7 @@ button {
 }
 
 .task-item.overdue {
-  border-left: 4px solid #ef4444 !important;
+  border-left: 4px solid #dc3545 !important;
 }
 
 .task-left {
